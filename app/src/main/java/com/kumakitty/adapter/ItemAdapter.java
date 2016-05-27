@@ -1,4 +1,4 @@
-package com.kumakitty.yun;
+package com.kumakitty.adapter;
 
 import android.content.Context;
 import android.support.v7.widget.RecyclerView;
@@ -13,6 +13,7 @@ import com.android.volley.Response;
 import com.android.volley.VolleyError;
 import com.android.volley.toolbox.StringRequest;
 import com.android.volley.toolbox.Volley;
+import com.kumakitty.yun.R;
 import com.nostra13.universalimageloader.core.DisplayImageOptions;
 import com.nostra13.universalimageloader.core.ImageLoader;
 
@@ -26,60 +27,46 @@ import java.util.ArrayList;
  */
 public class ItemAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> implements View.OnClickListener {
     Context context;
-    ArrayList<String> urlslarge;
-    ArrayList<String> urlssmall;
-    ArrayList<String> urlsave;
+    ArrayList<String> urls;
     RequestQueue mQueue;
-    ImageLoader imageLoader=ImageLoader.getInstance();
-
-    @Override
-    public void onClick(View v) {
-        if (mOnItemClickListener != null) {
-            //注意这里使用getTag方法获取数据
-            mOnItemClickListener.onItemClick(v,(String) v.getTag());
-        }
-    }
-
+    ImageLoader imageLoader = ImageLoader.getInstance();
     int bgc;
     private OnRecyclerViewItemClickListener mOnItemClickListener = null;
+
     DisplayImageOptions options = new DisplayImageOptions.Builder()
-            //.showImageOnLoading(R.drawable.ic_stub) // 设置图片下载期间显示的图片
-            //.showImageForEmptyUri(R.drawable.ic_empty) // 设置图片Uri为空或是错误的时候显示的图片
-            // .showImageOnFail(R.drawable.ic_error) // 设置图片加载或解码过程中发生错误显示的图片
-            .cacheInMemory(true) // 设置下载的图片是否缓存在内存中
-            .cacheOnDisk(true) // 设置下载的图片是否缓存在SD卡中
-            //.displayer(new RoundedBitmapDisplayer(20)) // 设置成圆角图片
-            .build(); // 构建完成
+            .cacheInMemory(true)
+            .cacheOnDisk(true)
+            .build();
 
-
-    public ItemAdapter(ArrayList<String> urlslarge,ArrayList<String> urlssmall, ArrayList<String> urlsave,Context context) {
-        this.urlssmall = urlssmall;
-        this.urlslarge = urlslarge;
-        this.urlsave = urlsave;
+    public ItemAdapter(ArrayList<String> urls, Context context) {
+        this.urls = urls;
         this.context = context;
     }
 
+
+
+
     @Override
     public void onBindViewHolder(RecyclerView.ViewHolder holder, int position) {
-        String urlsmall = urlssmall.get(position);
-        String urlave = urlsave.get(position);
-        String urllarge = urlslarge.get(position);
+
+        StringBuffer url = new StringBuffer(urls.get(position)).append("?imageView2/2/w/200");
+        StringBuffer urlave = new StringBuffer(urls.get(position)).append("?imageAve");
         View view = holder.itemView;
         ImageView item_iv = (ImageView) view.findViewById(R.id.item_iv);
-        item_iv.setBackgroundResource(getAve(urlave));
-        imageLoader.displayImage(urlsmall,item_iv,options);
-        view.setTag(urllarge);
+        item_iv.setBackgroundResource(getAve(urlave.toString()));
+        imageLoader.displayImage(url.toString(), item_iv, options);
+        view.setTag(urls.get(position));
     }
 
-    private int getAve(String urlsave) {
+    private int getAve(String url) {
         mQueue = Volley.newRequestQueue(context);
-        StringRequest stringRequest = new StringRequest(urlsave,
+        StringRequest stringRequest = new StringRequest(url,
                 new Response.Listener<String>() {
                     @Override
                     public void onResponse(String response) {
                         Log.d("TAG", response);
                         try {
-                            bgc=new JSONObject(response).getInt("RGB");
+                            bgc = new JSONObject(response).getInt("RGB");
                         } catch (JSONException e) {
                             e.printStackTrace();
                         }
@@ -109,7 +96,7 @@ public class ItemAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> i
 
     @Override
     public int getItemCount() {
-        return urlsave.size();
+        return urls.size();
     }
 
     class viewHolder extends RecyclerView.ViewHolder {
@@ -117,12 +104,25 @@ public class ItemAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> i
             super(itemView);
         }
     }
+
     public static interface OnRecyclerViewItemClickListener {
-        void onItemClick(View view , String data);
+        void onItemClick(View view, String data);
     }
+
     public void setOnItemClickListener(OnRecyclerViewItemClickListener listener) {
         this.mOnItemClickListener = listener;
     }
+    @Override
+    public void onClick(View v) {
+        if (mOnItemClickListener != null) {
+            mOnItemClickListener.onItemClick(v, v.getTag().toString());
+        }
+    }
 
+    public void appendItems(ArrayList<String> addurl) {
+        int count = getItemCount();
+        urls.addAll(addurl);
+        notifyItemRangeInserted(count, addurl.size());
+    }
 
 }
